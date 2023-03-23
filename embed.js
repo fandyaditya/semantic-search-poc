@@ -2,9 +2,9 @@ const { encode } = require('gpt-3-encoder');
 const fs = require('fs');
 const CHUNK_LIMIT = 200;
 const CHUNK_MINIMAL = 100;
-require('dotenv').config()
 const openAiHelper = require('./openAI');
 const supabaseHelper = require('./supabase');
+const pineConeHelper = require('./pinecone');
 
 const chunkArticle = (article) => {
     let articleTextChunks = [];
@@ -76,14 +76,19 @@ const chunkArticle = (article) => {
 
     for(let i = 0 ; i < chunkedArticles.length ; i++) {
         const embedding = await openAiHelper.createEmbedding(chunkedArticles[i].content);
+        const result = await pineConeHelper.upsert({ 
+            content: chunkedArticles[i].content,
+            content_tokens: chunkedArticles[i].content_tokens,
+            embedding
+        });
 
-        const { data,error } = await supabaseHelper
-            .from('semantic_search_poc')
-            .insert({
-                content: chunkedArticles[i].content,
-                content_tokens: chunkedArticles[i].content_tokens,
-                embedding
-        })
+        // const { data,error } = await supabaseHelper
+        //     .from('semantic_search_poc')
+        //     .insert({
+        //         content: chunkedArticles[i].content,
+        //         content_tokens: chunkedArticles[i].content_tokens,
+        //         embedding
+        // })
         
         setTimeout(() => {}, 500)
     }
